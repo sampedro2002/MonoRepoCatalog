@@ -44,6 +44,16 @@ The backend reads its datasource from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`.
 ./gradlew :apps:backend:bootJar     # apps/backend/build/libs/backend-1.0.0.jar
 ```
 
+## Errors
+
+Every error response is an RFC 7807 problem (`application/problem+json`) with a `traceId` property. The same id is in the `X-Trace-Id` response header and in the server log. If the caller sends a valid `X-Trace-Id` header (letters, digits and dashes, up to 64 characters), that value is reused; otherwise a new one is generated.
+
+```json
+{"type":"about:blank","title":"Not Found","status":404,"detail":"No static resource api/unknown.","instance":"/api/unknown","traceId":"3f2b8c1e-9a7d-4e21-b0c4-6d5e8f1a2b3c"}
+```
+
+Unexpected errors return a generic 500 message; the details stay in the log under the same `traceId`.
+
 ## Typed API client
 
 `packages/shared` contains a typed Java client generated from `packages/shared/src/main/openapi/catalog-api.yaml` by the `openapi-generator` Gradle plugin.

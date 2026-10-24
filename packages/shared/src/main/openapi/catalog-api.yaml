@@ -19,6 +19,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthStatus'
+        default:
+          description: Error response
+          headers:
+            X-Trace-Id:
+              description: Identifier of this request, also written to the server log
+              schema:
+                type: string
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     HealthStatus:
@@ -29,3 +40,30 @@ components:
         status:
           type: string
           example: UP
+    ErrorResponse:
+      type: object
+      description: RFC 7807 problem details, extended with the trace id of the failing request
+      required:
+        - title
+        - status
+        - traceId
+      properties:
+        type:
+          type: string
+          format: uri
+          example: about:blank
+        title:
+          type: string
+          example: Not Found
+        status:
+          type: integer
+          example: 404
+        detail:
+          type: string
+          example: No static resource api/unknown.
+        instance:
+          type: string
+          format: uri
+        traceId:
+          type: string
+          example: 3f2b8c1e-9a7d-4e21-b0c4-6d5e8f1a2b3c
