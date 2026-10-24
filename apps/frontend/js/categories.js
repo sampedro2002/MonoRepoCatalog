@@ -1,3 +1,5 @@
+import { ApiError, request } from "./api.js";
+
 const API_URL = "/api/categories";
 
 const form = document.getElementById("category-form");
@@ -10,43 +12,6 @@ const cancelButton = document.getElementById("cancel-button");
 const formError = document.getElementById("form-error");
 const listStatus = document.getElementById("list-status");
 const categoryList = document.getElementById("category-list");
-
-class ApiError extends Error {
-  constructor(status, message) {
-    super(message);
-    this.status = status;
-  }
-}
-
-async function request(url, options = {}) {
-  const response = await fetch(url, {
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    ...options,
-  });
-
-  if (!response.ok) {
-    throw new ApiError(response.status, await readErrorMessage(response));
-  }
-
-  return response.status === 204 ? null : response.json();
-}
-
-async function readErrorMessage(response) {
-  if (response.status === 409) {
-    return "A category with this name already exists.";
-  }
-
-  try {
-    const body = await response.json();
-    if (body && body.message) {
-      return body.message;
-    }
-  } catch {
-    // The body is not JSON; fall back to the status text below.
-  }
-
-  return response.statusText || `Request failed with status ${response.status}`;
-}
 
 function setListStatus(text, isError = false) {
   listStatus.textContent = text;
@@ -169,7 +134,10 @@ async function saveCategory(event) {
     resetForm();
     await loadCategories();
   } catch (error) {
-    showFormError(`Could not save the category: ${error.message}`);
+    const message = error instanceof ApiError && error.status === 409
+      ? "A category with this name already exists."
+      : error.message;
+    showFormError(`Could not save the category: ${message}`);
   } finally {
     saveButton.disabled = false;
   }

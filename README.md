@@ -59,6 +59,8 @@ npm start                           # http://localhost:5500
 
 The categories page (`categories.html`) lists, creates, edits and deletes categories through the REST API at `/api/categories`.
 
+The products page (`products.html`) shows a paginated product list from `GET /api/products`, with page size selection and previous/next navigation.
+
 ## Dependencies
 
 Versions are declared in `gradle/libs.versions.toml`; the Spring Boot BOM manages the rest.
