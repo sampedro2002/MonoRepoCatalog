@@ -44,6 +44,16 @@ The backend reads its datasource from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`.
 ./gradlew :apps:backend:bootJar     # apps/backend/build/libs/backend-1.0.0.jar
 ```
 
+## Demo data
+
+With the `dev` profile, the backend inserts 3 demo categories and 6 demo products into an empty database. It does nothing if the data already exists.
+
+```bash
+SPRING_PROFILES_ACTIVE=dev ./gradlew :apps:backend:bootRun
+```
+
+To enable it permanently, export `SPRING_PROFILES_ACTIVE=dev` in your shell or add it to your IDE run configuration. Spring does not read `.env` by itself.
+
 ## Errors
 
 Every error response is an RFC 7807 problem (`application/problem+json`) with a `traceId` property. The same id is in the `X-Trace-Id` response header and in the server log. If the caller sends a valid `X-Trace-Id` header (letters, digits and dashes, up to 64 characters), that value is reused; otherwise a new one is generated.
@@ -76,6 +86,8 @@ HealthStatus status = new HealthApi(client).getHealth();
 ```bash
 ./gradlew :tests:integration:test   # starts a PostgreSQL container; needs Docker running
 ```
+
+The integration tests use Testcontainers 1.21.4. Older Testcontainers versions fail against Docker Engine 29 with a 400 error from the Docker API.
 
 ## Frontend
 
