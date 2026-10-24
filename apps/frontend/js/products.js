@@ -1,11 +1,12 @@
 import { fetchCategories } from "./category-api.js";
 import { request } from "./api.js";
+import { hideState, showError, showLoading, showMessage } from "./ui-state.js";
 
 const API_URL = "/api/products";
 const SORT = "name,asc";
 
 const totalCount = document.getElementById("total-count");
-const listStatus = document.getElementById("list-status");
+const listState = document.getElementById("list-state");
 const productList = document.getElementById("product-list");
 const categoryFilter = document.getElementById("category-filter");
 const pageSizeSelect = document.getElementById("page-size");
@@ -23,12 +24,6 @@ const state = {
 };
 
 const priceFormatter = new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" });
-
-function setListStatus(text, isError = false) {
-  listStatus.textContent = text;
-  listStatus.hidden = !text;
-  listStatus.classList.toggle("message-error", isError);
-}
 
 function renderProduct(product) {
   const item = document.createElement("li");
@@ -79,13 +74,16 @@ function renderPage(data) {
   renderPagination(data);
 
   if (data.content.length === 0) {
-    setListStatus("No products found.");
+    showMessage(listState, "No products found.");
   } else {
-    setListStatus("");
+    hideState(listState);
   }
 }
 
 async function loadCategoryOptions() {
+  categoryFilter.disabled = true;
+  categoryFilter.options[0].textContent = "Loading categories...";
+
   try {
     const categories = await fetchCategories();
     const options = categories.map((category) => {
@@ -95,14 +93,22 @@ async function loadCategoryOptions() {
       return option;
     });
     categoryFilter.append(...options);
+    categoryFilter.options[0].textContent = "All categories";
+    categoryFilter.disabled = false;
   } catch {
     categoryFilter.disabled = true;
     categoryFilter.options[0].textContent = "Categories unavailable";
   }
 }
 
+// Only the most recent request may update the page, so a slow response
+// for an old filter or page cannot overwrite the current results.
+let latestRequestId = 0;
+
 async function loadProducts() {
-  setListStatus("Loading products...");
+  const requestId = ++latestRequestId;
+
+  showLoading(listState, "Loading products...");
   productList.replaceChildren();
   previousButton.disabled = true;
   nextButton.disabled = true;
@@ -117,11 +123,16 @@ async function loadProducts() {
   }
 
   try {
-    renderPage(await request(`${API_URL}?${params}`));
+    const data = await request(`${API_URL}?${params}`);
+    if (requestId === latestRequestId) {
+      renderPage(data);
+    }
   } catch (error) {
-    totalCount.hidden = true;
-    pageIndicator.textContent = "";
-    setListStatus(`Could not load products: ${error.message}`, true);
+    if (requestId === latestRequestId) {
+      totalCount.hidden = true;
+      pageIndicator.textContent = "";
+      showError(listState, `Could not load products: ${error.message}`, loadProducts);
+    }
   }
 }
 

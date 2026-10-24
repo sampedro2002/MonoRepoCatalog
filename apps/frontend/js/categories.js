@@ -1,5 +1,6 @@
 import { ApiError } from "./api.js";
 import { createCategory, deleteCategory, fetchCategories, updateCategory } from "./category-api.js";
+import { hideState, showError, showLoading, showMessage } from "./ui-state.js";
 
 const form = document.getElementById("category-form");
 const idInput = document.getElementById("category-id");
@@ -9,14 +10,8 @@ const formTitle = document.getElementById("form-title");
 const saveButton = document.getElementById("save-button");
 const cancelButton = document.getElementById("cancel-button");
 const formError = document.getElementById("form-error");
-const listStatus = document.getElementById("list-status");
+const listState = document.getElementById("list-state");
 const categoryList = document.getElementById("category-list");
-
-function setListStatus(text, isError = false) {
-  listStatus.textContent = text;
-  listStatus.hidden = !text;
-  listStatus.classList.toggle("message-error", isError);
-}
 
 function showFormError(text) {
   formError.textContent = text;
@@ -89,20 +84,20 @@ function renderList(categories) {
   categoryList.replaceChildren(...categories.map(renderCategory));
 
   if (categories.length === 0) {
-    setListStatus("No categories yet. Create the first one using the form.");
+    showMessage(listState, "No categories yet. Create the first one using the form.");
   } else {
-    setListStatus("");
+    hideState(listState);
   }
 }
 
 async function loadCategories() {
-  setListStatus("Loading categories...");
+  showLoading(listState, "Loading categories...");
   categoryList.replaceChildren();
 
   try {
     renderList(await fetchCategories());
   } catch (error) {
-    setListStatus(`Could not load categories: ${error.message}`, true);
+    showError(listState, `Could not load categories: ${error.message}`, loadCategories);
   }
 }
 
@@ -125,6 +120,7 @@ async function saveCategory(event) {
   const isEditing = id !== "";
 
   saveButton.disabled = true;
+  saveButton.textContent = "Saving...";
   try {
     if (isEditing) {
       await updateCategory(id, payload);
@@ -140,6 +136,7 @@ async function saveCategory(event) {
     showFormError(`Could not save the category: ${message}`);
   } finally {
     saveButton.disabled = false;
+    saveButton.textContent = idInput.value ? "Update" : "Create";
   }
 }
 
@@ -155,7 +152,7 @@ async function handleDelete(category) {
     }
     await loadCategories();
   } catch (error) {
-    setListStatus(`Could not delete the category: ${error.message}`, true);
+    showError(listState, `Could not delete the category: ${error.message}`);
   }
 }
 
