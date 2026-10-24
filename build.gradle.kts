@@ -4,6 +4,6 @@ plugins {
 }
 
 allprojects {
-    group = "org.example"
+    group = "org.ejemplo"
     version = "1.0.0"
 }

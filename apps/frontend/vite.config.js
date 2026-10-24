@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite';
 
-// The Spring Boot backend runs on 8080 (apps/backend). In development the
-// browser talks to the Vite server on 5500 and Vite forwards the calls, so the
-// frontend never needs CORS.
+// El backend Spring Boot se ejecuta en 8080 (apps/backend). Durante el
+// desarrollo, el navegador usa Vite en 5500 y Vite reenvia las llamadas,
+// por lo que el frontend no necesita CORS.
 const BACKEND_URL = 'http://localhost:8080';
 
 export default defineConfig({

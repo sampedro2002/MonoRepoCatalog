@@ -32,5 +32,5 @@ tasks.withType<Test> {
 }
 
 springBoot {
-    mainClass.set("org.example.CatalogApplication")
+    mainClass.set("org.ejemplo.AplicacionCatalogo")
 }

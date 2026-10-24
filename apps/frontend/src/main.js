@@ -1,7 +1,7 @@
 const statusEl = document.getElementById('backend-status');
 
-// Goes through the Vite proxy to http://localhost:8080/actuator/health
-async function loadBackendHealth() {
+// Consulta el estado mediante el proxy de Vite en http://localhost:8080/actuator/health
+async function cargarEstadoBackend() {
   try {
     const response = await fetch('/actuator/health');
     const body = await response.json();
@@ -11,4 +11,4 @@ async function loadBackendHealth() {
   }
 }
 
-loadBackendHealth();
+cargarEstadoBackend();
