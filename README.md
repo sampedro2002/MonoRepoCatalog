@@ -13,7 +13,7 @@ webCatalog/
 ├── gradlew, gradlew.bat
 ├── apps/
 │   ├── backend/               Java + PostgreSQL (Spring Boot)
-│   └── frontend/              Static pages (no build step)
+│   └── frontend/              Vanilla HTML/JS served by Vite (dev proxy to the backend)
 ├── packages/
 │   └── shared/                Shared Java library
 ├── tests/
@@ -25,7 +25,7 @@ webCatalog/
 
 - JDK 21 (Gradle provisions the toolchain if it is missing)
 - Docker (PostgreSQL via `docker compose`, and the integration tests)
-- Node.js 22+ (only for the frontend's `npm start`)
+- Node.js 22+ (only for the frontend's `npm run dev`)
 
 ## Setup
 
@@ -54,8 +54,11 @@ The backend reads its datasource from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`.
 
 ```bash
 cd apps/frontend
-npm start                           # http://localhost:5500
+npm install
+npm run dev                         # http://localhost:5500
 ```
+
+Vite proxies `/api` and `/actuator` to the backend on `http://localhost:8080`, so start the backend first to see its health status on the page.
 
 ## Dependencies
 
@@ -66,4 +69,4 @@ Versions are declared in `gradle/libs.versions.toml`; the Spring Boot BOM manage
 | `apps/backend` | spring-boot-starter-web, spring-boot-starter-data-jpa, spring-boot-starter-validation, postgresql (runtime), spring-boot-devtools (development only), spring-boot-starter-test (test) |
 | `tests/integration` | spring-boot-starter-web, spring-boot-starter-test, spring-boot-testcontainers, testcontainers (postgresql, junit-jupiter), postgresql (runtime) |
 | `packages/shared` | none yet |
-| `apps/frontend` | none (vanilla HTML/CSS/JS) |
+| `apps/frontend` | vite (dev/build only) |
