@@ -44,6 +44,16 @@ The backend reads its datasource from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`.
 ./gradlew :apps:backend:bootJar     # apps/backend/build/libs/backend-1.0.0.jar
 ```
 
+## Publishing the shared package
+
+`packages/shared` is published as `org.example:catalog-shared`. The jar contains the typed client and the OpenAPI contract under `openapi/catalog-api.yaml`.
+
+```bash
+./gradlew :packages:shared:publishToMavenLocal   # installs into ~/.m2 for local consumers
+```
+
+No remote repository is configured yet.
+
 ## Demo data
 
 With the `dev` profile, the backend inserts 3 demo categories and 6 demo products into an empty database. It does nothing if the data already exists.

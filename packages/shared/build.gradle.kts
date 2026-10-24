@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    `maven-publish`
     alias(libs.plugins.openapi.generator)
 }
 
@@ -54,6 +55,22 @@ dependencies {
     api(libs.jakarta.annotation.api)
 
     testImplementation(libs.junit.jupiter)
+}
+
+// The OpenAPI contract ships inside the jar, so consumers can read the spec the client was built from
+tasks.jar {
+    from(catalogApiSpec) {
+        into("openapi")
+    }
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            artifactId = "catalog-shared"
+            from(components["java"])
+        }
+    }
 }
 
 tasks.withType<Test> {
