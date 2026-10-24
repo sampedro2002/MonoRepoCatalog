@@ -1,8 +1,8 @@
 {
-  "name": "catalog-frontend",
+  "name": "catalogo-frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "Static frontend for the product catalog (vanilla HTML/CSS/JS, no build step)",
+  "description": "Frontend estatico del catalogo de productos (HTML/CSS/JS puro, sin paso de compilacion)",
   "scripts": {
     "start": "python3 -m http.server 5500"
   },
