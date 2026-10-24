@@ -3,10 +3,11 @@ package org.ejemplo.producto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface RepositorioProducto extends JpaRepository<Producto, Long> {
+public interface RepositorioProducto extends JpaRepository<Producto, Long>, JpaSpecificationExecutor<Producto> {
 
     @Query("select p from Producto p where p.categoria.id = :categoriaId")
     Page<Producto> buscarPorCategoriaId(@Param("categoriaId") Long categoriaId, Pageable pageable);
