@@ -2,9 +2,15 @@
   "name": "catalog-frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "Static frontend for the product catalog (vanilla HTML/CSS/JS, no build step)",
+  "type": "module",
+  "description": "Frontend for the product catalog (vanilla HTML/CSS/JS served by Vite, no framework)",
   "scripts": {
-    "start": "python3 -m http.server 5500"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "6.4.4"
   },
   "engines": {
     "node": ">=22"
