@@ -1,0 +1,31 @@
+openapi: 3.0.3
+info:
+  title: Catalog API
+  version: 1.0.0
+  description: HTTP API exposed by the catalog backend. The typed Java client in packages/shared is generated from this file.
+servers:
+  - url: http://localhost:8080
+paths:
+  /api/health:
+    get:
+      tags:
+        - Health
+      operationId: getHealth
+      summary: Report whether the service is running
+      responses:
+        '200':
+          description: The service is running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          example: UP

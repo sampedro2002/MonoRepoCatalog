@@ -44,6 +44,23 @@ The backend reads its datasource from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`.
 ./gradlew :apps:backend:bootJar     # apps/backend/build/libs/backend-1.0.0.jar
 ```
 
+## Typed API client
+
+`packages/shared` contains a typed Java client generated from `packages/shared/src/main/openapi/catalog-api.yaml` by the `openapi-generator` Gradle plugin.
+The generated sources go to `packages/shared/build/generated/openapi/catalog-client` and are rebuilt on every compile. To change the API, edit the spec, then rebuild:
+
+```bash
+./gradlew :packages:shared:compileJava   # regenerates the client
+```
+
+Usage (package `org.example.shared.catalog`):
+
+```java
+ApiClient client = new ApiClient();
+client.updateBaseUri("http://localhost:8080");
+HealthStatus status = new HealthApi(client).getHealth();
+```
+
 ## Integration tests
 
 ```bash
@@ -65,5 +82,5 @@ Versions are declared in `gradle/libs.versions.toml`; the Spring Boot BOM manage
 |--------|-----------|
 | `apps/backend` | spring-boot-starter-web, spring-boot-starter-data-jpa, spring-boot-starter-validation, postgresql (runtime), spring-boot-devtools (development only), spring-boot-starter-test (test) |
 | `tests/integration` | spring-boot-starter-web, spring-boot-starter-test, spring-boot-testcontainers, testcontainers (postgresql, junit-jupiter), postgresql (runtime) |
-| `packages/shared` | none yet |
+| `packages/shared` | jackson-databind, jackson-datatype-jsr310, jakarta.annotation-api (generated client), junit-jupiter (test) |
 | `apps/frontend` | none (vanilla HTML/CSS/JS) |
