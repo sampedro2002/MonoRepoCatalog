@@ -1,9 +1,9 @@
 {
-  "name": "catalog-frontend",
+  "name": "catalogo-frontend",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Frontend for the product catalog (vanilla HTML/CSS/JS served by Vite, no framework)",
+  "description": "Frontend del catalogo de productos (HTML/CSS/JS puro servido por Vite, sin framework)",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

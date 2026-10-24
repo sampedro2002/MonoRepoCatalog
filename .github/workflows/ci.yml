@@ -1,4 +1,4 @@
-name: CI
+name: Integracion continua
 
 on:
   pull_request:
@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   backend:
-    name: Backend build and tests
+    name: Compilacion y pruebas del backend
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,12 +24,12 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      # Runs compilation and every test task. Integration tests start PostgreSQL
-      # through Testcontainers, which works on the ubuntu-latest runner's Docker.
+      # Compila y ejecuta todas las pruebas. Las pruebas de integracion inician PostgreSQL
+      # mediante Testcontainers usando Docker del runner ubuntu-latest.
       - run: ./gradlew build
 
   frontend:
-    name: Frontend build
+    name: Compilacion del frontend
     runs-on: ubuntu-latest
     defaults:
       run:

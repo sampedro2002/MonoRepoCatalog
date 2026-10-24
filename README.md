@@ -1,55 +1,57 @@
-# webCatalog
+# Catalogo web
 
-Product catalog monorepo: a Spring Boot 3 (Java 21) and PostgreSQL backend, and a static HTML/CSS/JavaScript frontend.
+Monorepositorio del catalogo de productos: backend con Spring Boot 3, Java 21 y PostgreSQL, junto con un frontend estatico en HTML, CSS y JavaScript.
 
-> Status: project setup. Build configuration, dependencies and tooling are in place; application features are not implemented yet.
+> Estado: configuracion inicial. La configuracion de compilacion, las dependencias y las herramientas estan listas; las funcionalidades de la aplicacion se implementan por modulos.
 
-## Structure
+## Estructura
 
 ```text
-webCatalog/
+catalogo-web/
 ├── settings.gradle.kts / build.gradle.kts / gradle.properties
-├── gradle/                    libs.versions.toml (dependency versions) + wrapper
+├── gradle/                    libs.versions.toml (versiones de dependencias) + wrapper
 ├── gradlew, gradlew.bat
 ├── apps/
 │   ├── backend/               Java + PostgreSQL (Spring Boot)
-│   └── frontend/              Vanilla HTML/JS served by Vite (dev proxy to the backend)
+│   └── frontend/              HTML/JS puro servido por Vite
 ├── packages/
-│   └── shared/                Shared Java library
+│   └── shared/                Libreria Java compartida
 ├── tests/
-│   └── integration/           Tests that need a real PostgreSQL (Testcontainers)
+│   └── integration/           Pruebas que requieren PostgreSQL real (Testcontainers)
 └── .env.example
 ```
 
-## Requirements
+## Requisitos
 
-- JDK 21 (Gradle provisions the toolchain if it is missing)
-- Docker (PostgreSQL via `docker compose`, and the integration tests)
-- Node.js 22+ (only for the frontend's `npm run dev`)
+- JDK 21 (Gradle aprovisiona el toolchain si no esta instalado)
+- Docker (PostgreSQL mediante `docker compose` y pruebas de integracion)
+- Node.js 22 o superior (para `npm run dev` del frontend)
 
-## Setup
+## Configuracion
 
 ```bash
-cp .env.example .env          # set POSTGRES_PASSWORD and DB_PASSWORD
-docker compose up -d          # start PostgreSQL on localhost:5432
+cp .env.example .env          # define POSTGRES_PASSWORD y DB_PASSWORD
+docker compose up -d          # inicia PostgreSQL en localhost:5432
 ```
 
-The backend reads its datasource from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`. Export them in your shell or in your IDE run configuration.
+El backend lee la conexion de base de datos desde `DB_URL`, `DB_USERNAME` y `DB_PASSWORD`. Exporta estas variables en la terminal o en la configuracion de ejecucion del IDE.
 
-The schema is managed by Flyway: scripts in `apps/backend/src/main/resources/db/migration` run on startup, and Hibernate only validates the entities against them. Add new changes as a new `V<n>__description.sql` file; never edit one that has already been applied.
+El esquema es administrado por Flyway. Las migraciones de `apps/backend/src/main/resources/db/migration` se ejecutan al iniciar y Hibernate solo valida las entidades. Para nuevos cambios, agrega un archivo `V<n>__descripcion.sql`; nunca edites una migracion ya aplicada.
 
 ## Backend
 
 ```bash
 ./gradlew :apps:backend:bootRun     # http://localhost:8080
-./gradlew :apps:backend:test        # unit tests
+./gradlew :apps:backend:test        # pruebas unitarias
 ./gradlew :apps:backend:bootJar     # apps/backend/build/libs/backend-1.0.0.jar
 ```
 
-## Integration tests
+La API de categorias esta disponible en `/api/categorias` y ofrece listado, consulta, creacion, actualizacion y eliminacion.
+
+## Pruebas de integracion
 
 ```bash
-./gradlew :tests:integration:test   # starts a PostgreSQL container; needs Docker running
+./gradlew :tests:integration:test   # inicia un contenedor PostgreSQL; requiere Docker
 ```
 
 ## Frontend
@@ -60,15 +62,15 @@ npm install
 npm run dev                         # http://localhost:5500
 ```
 
-Vite proxies `/api` and `/actuator` to the backend on `http://localhost:8080`, so start the backend first to see its health status on the page.
+Vite redirige `/api` y `/actuator` al backend en `http://localhost:8080`. Inicia primero el backend para consultar su estado de salud en la pagina.
 
-## Dependencies
+## Dependencias
 
-Versions are declared in `gradle/libs.versions.toml`; the Spring Boot BOM manages the rest.
+Las versiones se declaran en `gradle/libs.versions.toml`; el BOM de Spring Boot administra las versiones compatibles.
 
-| Module | Libraries |
+| Modulo | Librerias |
 |--------|-----------|
-| `apps/backend` | spring-boot-starter-web, spring-boot-starter-data-jpa, spring-boot-starter-validation, spring-boot-starter-actuator, flyway-core, flyway-database-postgresql, postgresql (runtime), spring-boot-devtools (development only), spring-boot-starter-test (test) |
-| `tests/integration` | spring-boot-starter-web, spring-boot-starter-test, spring-boot-testcontainers, testcontainers (postgresql, junit-jupiter), postgresql (runtime) |
-| `packages/shared` | none yet |
-| `apps/frontend` | vite (dev/build only) |
+| `apps/backend` | spring-boot-starter-web, spring-boot-starter-data-jpa, spring-boot-starter-validation, spring-boot-starter-actuator, flyway-core, flyway-database-postgresql, postgresql, spring-boot-devtools y spring-boot-starter-test |
+| `tests/integration` | spring-boot-starter-web, spring-boot-starter-test, spring-boot-testcontainers, testcontainers y postgresql |
+| `packages/shared` | aun sin contenido |
+| `apps/frontend` | vite para desarrollo y compilacion |

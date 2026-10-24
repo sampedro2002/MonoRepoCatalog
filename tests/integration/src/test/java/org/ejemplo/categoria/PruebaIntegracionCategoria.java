@@ -1,4 +1,4 @@
-package org.example.category;
+package org.ejemplo.categoria;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -25,7 +25,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
-class CategoryIntegrationTest {
+class CategoriaIntegrationTest {
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
@@ -41,64 +41,64 @@ class CategoryIntegrationTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private CategoryRepository categoryRepository;
+    private RepositorioCategoria repositorioCategoria;
 
     @BeforeEach
     void clean() {
-        categoryRepository.deleteAll();
+        repositorioCategoria.deleteAll();
     }
 
     @Test
-    void createThenFetchThenListReturnsCategory() throws Exception {
-        mockMvc.perform(post("/api/categories")
+    void crearThenFetchThenListDevuelveCategoria() throws Exception {
+        mockMvc.perform(post("/api/categorias")
                         .contentType("application/json")
-                        .content("{\"name\":\"Bebidas\",\"description\":\"Sin alcohol\"}"))
+                        .content("{\"nombre\":\"Bebidas\",\"descripcion\":\"Sin alcohol\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(header().exists("Location"))
-                .andExpect(jsonPath("$.name").value("Bebidas"));
+                .andExpect(jsonPath("$.nombre").value("Bebidas"));
 
-        Long id = categoryRepository.findAll().get(0).getId();
+        Long id = repositorioCategoria.findAll().get(0).getId();
 
-        mockMvc.perform(get("/api/categories/{id}", id))
+        mockMvc.perform(get("/api/categorias/{id}", id))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(id))
-                .andExpect(jsonPath("$.description").value("Sin alcohol"));
+                .andExpect(jsonPath("$.descripcion").value("Sin alcohol"));
 
-        mockMvc.perform(get("/api/categories"))
+        mockMvc.perform(get("/api/categorias"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
     }
 
     @Test
-    void updateChangesCategory() throws Exception {
-        Long id = categoryRepository.save(new Category("Bebidas", null)).getId();
+    void actualizarCambiaCategoria() throws Exception {
+        Long id = repositorioCategoria.save(new Categoria("Bebidas", null)).getId();
 
-        mockMvc.perform(put("/api/categories/{id}", id)
+        mockMvc.perform(put("/api/categorias/{id}", id)
                         .contentType("application/json")
-                        .content("{\"name\":\"Jugos\",\"description\":\"Naturales\"}"))
+                        .content("{\"nombre\":\"Jugos\",\"descripcion\":\"Naturales\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Jugos"))
-                .andExpect(jsonPath("$.description").value("Naturales"));
+                .andExpect(jsonPath("$.nombre").value("Jugos"))
+                .andExpect(jsonPath("$.descripcion").value("Naturales"));
     }
 
     @Test
-    void deleteRemovesCategory() throws Exception {
-        Long id = categoryRepository.save(new Category("Bebidas", null)).getId();
+    void eliminarEliminaCategoria() throws Exception {
+        Long id = repositorioCategoria.save(new Categoria("Bebidas", null)).getId();
 
-        mockMvc.perform(delete("/api/categories/{id}", id))
+        mockMvc.perform(delete("/api/categorias/{id}", id))
                 .andExpect(status().isNoContent());
 
-        assertThat(categoryRepository.existsById(id)).isFalse();
+        assertThat(repositorioCategoria.existsById(id)).isFalse();
     }
 
     @Test
-    void createWithBlankNameIsRejected() throws Exception {
-        mockMvc.perform(post("/api/categories")
+    void crearConNombreVacioEsRechazado() throws Exception {
+        mockMvc.perform(post("/api/categorias")
                         .contentType("application/json")
-                        .content("{\"name\":\"  \"}"))
+                        .content("{\"nombre\":\"  \"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest());
 
-        assertThat(categoryRepository.count()).isZero();
+        assertThat(repositorioCategoria.count()).isZero();
     }
 }
