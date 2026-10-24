@@ -1,3 +1,4 @@
+import { fetchCategories } from "./category-api.js";
 import { request } from "./api.js";
 
 const API_URL = "/api/products";
@@ -6,15 +7,18 @@ const SORT = "name,asc";
 const totalCount = document.getElementById("total-count");
 const listStatus = document.getElementById("list-status");
 const productList = document.getElementById("product-list");
+const categoryFilter = document.getElementById("category-filter");
 const pageSizeSelect = document.getElementById("page-size");
 const previousButton = document.getElementById("previous-button");
 const nextButton = document.getElementById("next-button");
 const pageIndicator = document.getElementById("page-indicator");
 
 // Spring pages are zero-based; the page indicator shows one-based numbers.
+// An empty categoryId means "all categories".
 const state = {
   page: 0,
   size: Number(pageSizeSelect.value),
+  categoryId: "",
   totalPages: 0,
 };
 
@@ -81,6 +85,22 @@ function renderPage(data) {
   }
 }
 
+async function loadCategoryOptions() {
+  try {
+    const categories = await fetchCategories();
+    const options = categories.map((category) => {
+      const option = document.createElement("option");
+      option.value = String(category.id);
+      option.textContent = category.name;
+      return option;
+    });
+    categoryFilter.append(...options);
+  } catch {
+    categoryFilter.disabled = true;
+    categoryFilter.options[0].textContent = "Categories unavailable";
+  }
+}
+
 async function loadProducts() {
   setListStatus("Loading products...");
   productList.replaceChildren();
@@ -92,6 +112,9 @@ async function loadProducts() {
     size: String(state.size),
     sort: SORT,
   });
+  if (state.categoryId) {
+    params.set("categoryId", state.categoryId);
+  }
 
   try {
     renderPage(await request(`${API_URL}?${params}`));
@@ -122,4 +145,11 @@ pageSizeSelect.addEventListener("change", () => {
   loadProducts();
 });
 
+categoryFilter.addEventListener("change", () => {
+  state.categoryId = categoryFilter.value;
+  state.page = 0;
+  loadProducts();
+});
+
+loadCategoryOptions();
 loadProducts();

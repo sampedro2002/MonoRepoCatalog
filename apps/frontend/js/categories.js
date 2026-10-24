@@ -1,6 +1,5 @@
-import { ApiError, request } from "./api.js";
-
-const API_URL = "/api/categories";
+import { ApiError } from "./api.js";
+import { createCategory, deleteCategory, fetchCategories, updateCategory } from "./category-api.js";
 
 const form = document.getElementById("category-form");
 const idInput = document.getElementById("category-id");
@@ -79,7 +78,7 @@ function renderCategory(category) {
   buttons.className = "category-buttons";
   buttons.append(
     createButton("Edit", "", () => startEditing(category)),
-    createButton("Delete", "button-danger", () => deleteCategory(category)),
+    createButton("Delete", "button-danger", () => handleDelete(category)),
   );
 
   item.append(info, buttons);
@@ -101,7 +100,7 @@ async function loadCategories() {
   categoryList.replaceChildren();
 
   try {
-    renderList(await request(API_URL));
+    renderList(await fetchCategories());
   } catch (error) {
     setListStatus(`Could not load categories: ${error.message}`, true);
   }
@@ -127,10 +126,11 @@ async function saveCategory(event) {
 
   saveButton.disabled = true;
   try {
-    await request(isEditing ? `${API_URL}/${encodeURIComponent(id)}` : API_URL, {
-      method: isEditing ? "PUT" : "POST",
-      body: JSON.stringify(payload),
-    });
+    if (isEditing) {
+      await updateCategory(id, payload);
+    } else {
+      await createCategory(payload);
+    }
     resetForm();
     await loadCategories();
   } catch (error) {
@@ -143,13 +143,13 @@ async function saveCategory(event) {
   }
 }
 
-async function deleteCategory(category) {
+async function handleDelete(category) {
   if (!window.confirm(`Delete the category "${category.name}"?`)) {
     return;
   }
 
   try {
-    await request(`${API_URL}/${encodeURIComponent(category.id)}`, { method: "DELETE" });
+    await deleteCategory(category.id);
     if (idInput.value === String(category.id)) {
       resetForm();
     }
