@@ -55,6 +55,7 @@ dependencies {
     api(libs.jackson.databind)
     api(libs.jackson.datatype.jsr310)
     api(libs.jakarta.annotation.api)
+    testImplementation(libs.junit.jupiter)
 
 }
 

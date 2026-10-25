@@ -36,13 +36,12 @@ apps/frontend/dist/
 .copilot/
 .aider*
 
-# Tests - source code not committed
-**/src/test/
-tests/integration/src/
-
 # Playwright
 playwright-report/
 test-results/
+
+# Task/AI planning notes (kept local, not part of the deliverable)
+docs/
 
 # Local credentials (Spring profile "local")
 application-local.properties
