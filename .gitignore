@@ -39,3 +39,10 @@ apps/frontend/dist/
 # Tests - source code not committed
 **/src/test/
 tests/integration/src/
+
+# Playwright
+playwright-report/
+test-results/
+
+# Local credentials (Spring profile "local")
+application-local.properties

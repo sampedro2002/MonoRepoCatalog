@@ -16,7 +16,8 @@ webCatalog/
 ├── packages/
 │   └── shared/                Typed Java client and OpenAPI contract for the API
 ├── tests/
-│   └── integration/           Tests that need a real PostgreSQL (Testcontainers)
+│   ├── integration/           Tests that need a real PostgreSQL (Testcontainers)
+│   └── e2e/                   Playwright API tests against a running backend
 ├── .github/workflows/         ci.yml (build and tests) and suitest.yml (API smoke test)
 ├── docker-compose.yml         PostgreSQL 16 for local development
 ├── suitest.config.json        Database and base URL used by the Suitest workflow
@@ -36,7 +37,10 @@ cp .env.example .env   # then set POSTGRES_PASSWORD and DB_PASSWORD
 docker compose up -d
 ```
 
-The backend reads its datasource from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`. Export them in your shell or in your IDE run configuration before starting the backend. Spring does not read `.env` by itself.
+The backend reads its datasource from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`. Spring does not read `.env` by itself, so provide them in one of two ways:
+
+- **Local development (default):** create `apps/backend/src/main/resources/application-local.properties` with the three variables. The `local` profile is active when no profile is set, and the file is gitignored. Never commit it.
+- **Environment variables:** export them in your shell or in your IDE run configuration. Environment variables take precedence over the local file, which is how CI and deployments configure the database.
 
 ## Backend
 
@@ -109,6 +113,17 @@ No remote repository is configured yet.
 
 The integration tests use Testcontainers 1.21.4. Older Testcontainers versions fail against Docker Engine 29 with a 400 error from the Docker API.
 
+## End-to-end API tests (Playwright)
+
+`tests/e2e/api` holds Playwright tests that call the running API over HTTP: list, search, create, read, update, and delete with a 404 check. They use the `request` fixture, so no browser is needed. Tests run one at a time, because they create and delete their own product.
+
+```bash
+./gradlew :apps:backend:bootRun          # in one terminal, with the backend running on port 8080
+cd tests/e2e
+npm ci
+npx playwright test                       # API_URL defaults to http://localhost:8080
+```
+
 ## Frontend
 
 ```bash
@@ -122,7 +137,7 @@ The product page calls `http://localhost:8080/api/products` directly, so start t
 ## Continuous integration
 
 - `.github/workflows/ci.yml` runs on pull requests and on pushes to `main`: `./gradlew build` for the backend, and `npm test` for the frontend.
-- `.github/workflows/suitest.yml` runs on pushes to `test`: it builds the backend jar, starts it against PostgreSQL 16, runs a products CRUD smoke test, and runs the frontend tests. Its database settings are in `suitest.config.json`.
+- `.github/workflows/suitest.yml` runs on pushes to `test`: it builds the backend jar, starts it against PostgreSQL 16, runs the Playwright API tests in `tests/e2e`, and runs the frontend tests. Its database settings are in `suitest.config.json`.
 
 ## Dependencies
 

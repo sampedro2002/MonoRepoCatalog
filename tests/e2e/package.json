@@ -1,0 +1,13 @@
+{
+  "name": "webcatalog-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "End-to-end API tests for the webCatalog backend (Playwright, no browser needed)",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:api": "playwright test api"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  }
+}
