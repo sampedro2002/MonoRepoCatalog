@@ -1,4 +1,4 @@
-rootProject.name = "webCatalog"
+rootProject.name = "catalogoWeb"
 
 include(
     ":apps:backend",
