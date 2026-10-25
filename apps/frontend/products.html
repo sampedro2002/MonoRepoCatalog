@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Products</title>
+  <link rel="stylesheet" href="css/categories.css">
+  <link rel="stylesheet" href="css/products.css">
+  <link rel="stylesheet" href="css/states.css">
+</head>
+<body>
+  <header class="page-header">
+    <h1>Products</h1>
+  </header>
+
+  <main class="layout layout-single">
+    <section class="card" aria-labelledby="list-title">
+      <div class="list-header">
+        <h2 id="list-title">All products</h2>
+        <p id="total-count" class="message" hidden></p>
+      </div>
+
+      <div class="filters">
+        <div class="filter">
+          <label for="category-filter">Category</label>
+          <select id="category-filter">
+            <option value="" selected>All categories</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="list-state" class="state" role="status" hidden></div>
+      <ul id="product-list" class="product-list"></ul>
+
+      <nav class="pagination" aria-label="Product pages">
+        <div class="page-size">
+          <label for="page-size">Per page</label>
+          <select id="page-size">
+            <option value="10" selected>10</option>
+            <option value="20">20</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+
+        <div class="page-controls">
+          <button type="button" id="previous-button" class="button" disabled>Previous</button>
+          <span id="page-indicator" class="page-indicator" aria-live="polite"></span>
+          <button type="button" id="next-button" class="button" disabled>Next</button>
+        </div>
+      </nav>
+    </section>
+  </main>
+
+  <script src="js/products.js" type="module"></script>
+</body>
+</html>
