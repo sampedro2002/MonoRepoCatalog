@@ -45,3 +45,11 @@ docs/
 
 # Local credentials (Spring profile "local")
 application-local.properties
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+.terraform.tfstate.lock.info
