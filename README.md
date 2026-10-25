@@ -39,7 +39,7 @@ docker compose up -d
 
 The backend reads its datasource from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`. Spring does not read `.env` by itself, so provide them in one of two ways:
 
-- **Local development (default):** create `apps/backend/src/main/resources/application-local.properties` with the three variables. The `local` profile is active when no profile is set, and the file is gitignored. Never commit it.
+- **Local development (default):** create `apps/backend/src/main/resources/application-local.properties` with the three variables, plus `spring.flyway.locations=classpath:db/migration,classpath:db/seed` so a fresh database is seeded with the 15 demo products. The `local` profile is active when no profile is set, and the file is gitignored. Never commit it.
 - **Environment variables:** export them in your shell or in your IDE run configuration. Environment variables take precedence over the local file, which is how CI and deployments configure the database.
 
 ## Backend
@@ -53,8 +53,10 @@ The backend reads its datasource from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`.
 
 The schema is managed by Flyway, and Hibernate only validates the entities against it:
 
-- `V1__catalog_schema.sql` creates the `products` table. Applied once.
-- `R__seed_products.sql` inserts the 15 demo products when their names are missing. It is a repeatable migration, so it runs on startup, never duplicates a product, and keeps edits to existing products.
+- `db/migration/V1__catalog_schema.sql` creates the `products` table. Applied once, in every environment.
+- `db/seed/R__seed_products.sql` inserts the 15 demo products when their names are missing. It is a repeatable migration, so it runs on startup, never duplicates a product, and keeps edits to existing products.
+
+`spring.flyway.locations` decides what is applied. Production uses only `classpath:db/migration` (schema, no demo data); local development and QA add `classpath:db/seed`. A database that already applied the seed keeps starting when the seed is no longer on the path, thanks to `spring.flyway.ignore-migration-patterns=repeatable:missing`.
 
 Add schema changes as a new `V<n>__description.sql` file. Never edit a migration that has already been applied to a database you want to keep.
 

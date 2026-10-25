@@ -16,6 +16,8 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -31,6 +33,15 @@ class ProductApiIntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
+
+    /**
+     * Production applies only the schema; QA and these tests also load the demo seed
+     * (same setting as SPRING_FLYWAY_LOCATIONS in the Suitest workflow).
+     */
+    @DynamicPropertySource
+    static void loadDemoSeed(DynamicPropertyRegistry registry) {
+        registry.add("spring.flyway.locations", () -> "classpath:db/migration,classpath:db/seed");
+    }
 
     @Autowired
     private TestRestTemplate restTemplate;

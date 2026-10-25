@@ -74,6 +74,9 @@ jobs:
         run: ./gradlew --no-daemon :apps:backend:build
 
       - name: Start backend
+        env:
+          # QA loads the demo seed; production only gets the schema (db/migration)
+          SPRING_FLYWAY_LOCATIONS: classpath:db/migration,classpath:db/seed
         run: |
           java -jar apps/backend/build/libs/backend-1.0.0.jar > "$RUNNER_TEMP/backend.log" 2>&1 &
           echo "BACKEND_PID=$!" >> "$GITHUB_ENV"
