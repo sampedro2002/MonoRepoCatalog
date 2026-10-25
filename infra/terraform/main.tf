@@ -287,3 +287,48 @@ resource "aws_ecs_service" "frontend" {
 output "alb_dns_name" {
   value = aws_lb.alb.dns_name
 }
+
+
+# --- GitHub OIDC Provider y Rol ---
+resource "aws_iam_openid_connect_provider" "github" {
+  url             = "https://token.actions.githubusercontent.com"
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
+}
+
+resource "aws_iam_role" "github_actions_deploy" {
+  name = "github-actions-ecs-deploy"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Effect    = "Allow"
+      Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
+      Condition = {
+        StringEquals = { "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com" }
+        StringLike   = { "token.actions.githubusercontent.com:sub" = "repo:sampedro2002/MonoRepoCatalog:environment:production" }
+      }
+    }]
+  })
+}
+
+resource "aws_iam_role_policy" "ecs_deploy_policy" {
+  name = "ecs-deploy-policy"
+  role = aws_iam_role.github_actions_deploy.id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = [
+        "ecs:UpdateService",
+        "ecs:DescribeServices",
+        "iam:PassRole"
+      ]
+      Effect   = "Allow"
+      Resource = "*" # En producción real, límitalo a tus ARNs específicos
+    }]
+  })
+}
+
+output "github_actions_role_arn" {
+  value = aws_iam_role.github_actions_deploy.arn
+}

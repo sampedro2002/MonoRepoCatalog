@@ -1,0 +1,45 @@
+name: Manual Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Tag de release (ej. release-abc1234)'
+        required: true
+      service:
+        description: 'backend or frontend'
+        required: true
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Retag to prod
+        run: |
+          IMAGE="${{ vars.DOCKERHUB_USERNAME }}/catalog-${{ github.event.inputs.service }}"
+          docker buildx imagetools create -t $IMAGE:prod $IMAGE:${{ github.event.inputs.release }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Force ECS Redeploy
+        run: |
+          aws ecs update-service --cluster catalog --service ${{ github.event.inputs.service }} --force-new-deployment
+          aws ecs wait services-stable --cluster catalog --services ${{ github.event.inputs.service }}
