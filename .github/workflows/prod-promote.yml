@@ -1,0 +1,92 @@
+name: PROD Promote
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout merge commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tested commit and changed files
+        id: changes
+        run: |
+          # Verificar que es un merge commit (tiene 2 padres)
+          if ! git rev-parse HEAD^2 > /dev/null 2>&1; then
+            echo "::error::HEAD is not a merge commit. Releases must be merged with 'Create a merge commit'."
+            exit 1
+          fi
+          
+          # El segundo padre del merge es el último commit probado en test
+          TESTED=$(git rev-parse HEAD^2)
+          echo "tested_sha=$TESTED" >> $GITHUB_OUTPUT
+          echo "main_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+          
+          # Ver qué carpetas cambiaron entre main anterior y test
+          CHANGED_FILES=$(git diff --name-only HEAD^1 HEAD^2)
+          
+          if echo "$CHANGED_FILES" | grep -qE '^apps/backend/|^packages/shared/|^gradle/|\.gradle\.kts$|^gradle\.properties$'; then
+            echo "backend_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "backend_changed=false" >> $GITHUB_OUTPUT
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q '^apps/frontend/'; then
+            echo "frontend_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "frontend_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Promote Backend
+        if: steps.changes.outputs.backend_changed == 'true'
+        run: |
+          IMAGE="${{ vars.DOCKERHUB_USERNAME }}/catalog-backend"
+          SHA="${{ steps.changes.outputs.tested_sha }}"
+          MAIN_SHA="${{ steps.changes.outputs.main_sha }}"
+          echo "Promoting Backend: $IMAGE:sha-$SHA -> :prod"
+          docker buildx imagetools create -t $IMAGE:prod -t $IMAGE:release-$MAIN_SHA $IMAGE:sha-$SHA
+
+      - name: Skip Backend
+        if: steps.changes.outputs.backend_changed == 'false'
+        run: echo "Backend not changed, kept as is."
+
+      - name: Promote Frontend
+        if: steps.changes.outputs.frontend_changed == 'true'
+        run: |
+          IMAGE="${{ vars.DOCKERHUB_USERNAME }}/catalog-frontend"
+          SHA="${{ steps.changes.outputs.tested_sha }}"
+          MAIN_SHA="${{ steps.changes.outputs.main_sha }}"
+          echo "Promoting Frontend: $IMAGE:sha-$SHA -> :prod"
+          docker buildx imagetools create -t $IMAGE:prod -t $IMAGE:release-$MAIN_SHA $IMAGE:sha-$SHA
+
+      - name: Skip Frontend
+        if: steps.changes.outputs.frontend_changed == 'false'
+        run: echo "Frontend not changed, kept as is."
+
+      - name: Summary
+        run: |
+          echo "### PROD Promotion Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- Tested SHA: \`${{ steps.changes.outputs.tested_sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Main Merge SHA: \`${{ steps.changes.outputs.main_sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend Promoted: \`${{ steps.changes.outputs.backend_changed }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend Promoted: \`${{ steps.changes.outputs.frontend_changed }}\`" >> $GITHUB_STEP_SUMMARY
