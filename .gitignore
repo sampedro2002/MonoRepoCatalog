@@ -41,7 +41,8 @@ playwright-report/
 test-results/
 
 # Task/AI planning notes (kept local, not part of the deliverable)
-docs/
+docs/tasks/
+!docs/runbook.md
 
 # Local credentials (Spring profile "local")
 application-local.properties
