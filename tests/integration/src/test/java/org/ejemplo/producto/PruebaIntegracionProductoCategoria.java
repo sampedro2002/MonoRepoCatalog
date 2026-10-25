@@ -16,11 +16,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest
+@SpringBootTest(classes = org.example.CatalogApplication.class)
 @Testcontainers
 class ProductoCategoriaIntegracionTest {
 
@@ -53,6 +54,7 @@ class ProductoCategoriaIntegracionTest {
     }
 
     @Test
+    @Transactional
     void productoSeCargaConSuCategoria() {
         Categoria bebidas = repositorioCategoria.save(new Categoria("Bebidas", "Sin alcohol"));
         Long productoId = repositorioProducto.save(new Producto("Jugo de naranja", null,
