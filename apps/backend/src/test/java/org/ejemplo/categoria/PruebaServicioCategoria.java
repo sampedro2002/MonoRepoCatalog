@@ -25,11 +25,11 @@ class ServicioCategoriaTest {
     private ServicioCategoria servicioCategoria;
 
     @Test
-    void buscarTodosDevuelveTodasLasCategorias() {
+    void buscarTodasDevuelveTodasLasCategorias() {
         List<Categoria> categorias = List.of(new Categoria("Bebidas", null), new Categoria("Snacks", null));
         when(repositorioCategoria.findAll()).thenReturn(categorias);
 
-        assertThat(servicioCategoria.buscarTodos()).containsExactlyElementsOf(categorias);
+        assertThat(servicioCategoria.buscarTodas()).containsExactlyElementsOf(categorias);
     }
 
     @Test

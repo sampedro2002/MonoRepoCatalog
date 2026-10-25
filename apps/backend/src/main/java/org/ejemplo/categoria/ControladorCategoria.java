@@ -26,7 +26,7 @@ public class ControladorCategoria {
 
     @GetMapping
     public List<RespuestaCategoria> listar() {
-        return servicioCategoria.buscarTodos().stream()
+        return servicioCategoria.buscarTodas().stream()
                 .map(RespuestaCategoria::desde)
                 .toList();
     }

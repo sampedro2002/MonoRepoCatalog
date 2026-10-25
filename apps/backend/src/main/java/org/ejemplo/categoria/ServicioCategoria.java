@@ -15,7 +15,7 @@ public class ServicioCategoria {
     }
 
     @Transactional(readOnly = true)
-    public List<Categoria> buscarTodos() {
+    public List<Categoria> buscarTodas() {
         return repositorioCategoria.findAll();
     }
 

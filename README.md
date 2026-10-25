@@ -12,8 +12,9 @@ webCatalog/
 ├── gradle/                    libs.versions.toml (dependency versions) + wrapper
 ├── gradlew, gradlew.bat
 ├── apps/
-│   ├── backend/               Java + PostgreSQL (Spring Boot)
+│   ├── backend/               Java + PostgreSQL (Spring Boot)feature/product-crud-MW-3
 │   └── frontend/              Static pages (no build step)
+│   └── frontend/              Vanilla HTML/JS served by Vite (dev proxy to the backend) test
 ├── packages/
 │   └── shared/                Shared Java library
 ├── tests/
@@ -24,8 +25,11 @@ webCatalog/
 ## Requirements
 
 - JDK 21 (Gradle provisions the toolchain if it is missing)
-- Docker (PostgreSQL via `docker compose`, and the integration tests)
+- Docker (PostgreSQL via `docker compose`, and the integration tests) feature/product-crud-MW-3
 - Node.js 22+ (only for the frontend's `npm start`)
+
+- Node.js 22+ (only for the frontend's `npm run dev`)
+- test
 
 ## Setup
 
@@ -35,6 +39,10 @@ docker compose up -d          # start PostgreSQL on localhost:5432
 ```
 
 The backend reads its datasource from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`. Export them in your shell or in your IDE run configuration.
+feature/product-crud-MW-3
+
+The schema is managed by Flyway: scripts in `apps/backend/src/main/resources/db/migration` run on startup, and Hibernate only validates the entities against them. Add new changes as a new `V<n>__description.sql` file; never edit one that has already been applied.
+test
 
 ## Backend
 
@@ -57,6 +65,10 @@ cd apps/frontend
 npm start                           # http://localhost:5500
 ```
 
+feature/product-crud-MW-3
+Vite proxies `/api` and `/actuator` to the backend on `http://localhost:8080`, so start the backend first to see its health status on the page.
+
+test
 ## Dependencies
 
 Versions are declared in `gradle/libs.versions.toml`; the Spring Boot BOM manages the rest.
@@ -65,5 +77,6 @@ Versions are declared in `gradle/libs.versions.toml`; the Spring Boot BOM manage
 |--------|-----------|
 | `apps/backend` | spring-boot-starter-web, spring-boot-starter-data-jpa, spring-boot-starter-validation, postgresql (runtime), spring-boot-devtools (development only), spring-boot-starter-test (test) |
 | `tests/integration` | spring-boot-starter-web, spring-boot-starter-test, spring-boot-testcontainers, testcontainers (postgresql, junit-jupiter), postgresql (runtime) |
-| `packages/shared` | none yet |
+| `packages/shared` | none yet | feature/product-crud-MW-3
 | `apps/frontend` | none (vanilla HTML/CSS/JS) |
+| `apps/frontend` | vite (dev/build only) | test
