@@ -2,9 +2,10 @@
   "name": "catalog-frontend",
   "version": "1.0.0",
   "private": true,
-  "description": "Static frontend for the product catalog (vanilla HTML/CSS/JS, no build step)",
+  "description": "Static pages for the product catalog and the Rick and Morty browser (vanilla HTML/CSS/JS, no build step)",
   "scripts": {
-    "start": "python3 -m http.server 5500"
+    "start": "python3 -m http.server 5500",
+    "test": "node --test tests/rick-morty.test.cjs"
   },
   "engines": {
     "node": ">=22"

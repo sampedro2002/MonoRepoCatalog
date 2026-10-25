@@ -18,6 +18,9 @@ dependencies {
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.validation)
+    implementation(libs.spring.boot.starter.actuator)
+    implementation(libs.flyway.core)
+    implementation(libs.flyway.database.postgresql)
     developmentOnly(libs.spring.boot.devtools)
     runtimeOnly(libs.postgresql)
 
