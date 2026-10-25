@@ -1,4 +1,4 @@
-name: CI
+name: Continuous Integration
 
 on:
   pull_request:
@@ -24,8 +24,8 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      # Runs compilation and every test task. Integration tests start PostgreSQL
-      # through Testcontainers, which works on the ubuntu-latest runner's Docker.
+      # Builds and runs all tests. Integration tests start PostgreSQL
+      # through Testcontainers, using the Docker engine of the ubuntu-latest runner.
       - run: ./gradlew build
 
   frontend:

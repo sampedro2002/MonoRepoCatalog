@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite';
 
-// El backend Spring Boot se ejecuta en 8080 (apps/backend). Durante el
-// desarrollo, el navegador usa Vite en 5500 y Vite reenvia las llamadas,
-// por lo que el frontend no necesita CORS.
+// The Spring Boot backend runs on port 8080 (apps/backend). During development,
+// the browser uses Vite on port 5500, and Vite forwards the API calls,
+// so the frontend does not need CORS.
 const BACKEND_URL = 'http://localhost:8080';
 
 export default defineConfig({
