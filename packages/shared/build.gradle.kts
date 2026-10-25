@@ -56,7 +56,6 @@ dependencies {
     api(libs.jackson.datatype.jsr310)
     api(libs.jakarta.annotation.api)
 
-    testImplementation(libs.junit.jupiter)
 }
 
 // The OpenAPI contract ships inside the jar, so consumers can read the spec the client was built from

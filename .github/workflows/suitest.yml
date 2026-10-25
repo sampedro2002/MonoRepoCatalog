@@ -91,42 +91,16 @@ jobs:
           cat "$RUNNER_TEMP/backend.log"
           exit 1
 
-      - name: API smoke test (products CRUD)
-        run: |
-          set -euo pipefail
-          base="$API_URL/api/products"
+      - name: Install Playwright (API tests)
+        working-directory: tests/e2e
+        run: npm ci
 
-          # Seed data is loaded by data.sql
-          count=$(curl -fsS "$base" | jq 'length')
-          [ "$count" -gt 0 ] || { echo "Expected seeded products"; exit 1; }
-
-          # Search endpoint
-          curl -fsS "$base?q=keyboard" > /dev/null
-
-          # Create
-          id=$(curl -fsS -X POST "$base" \
-            -H 'Content-Type: application/json' \
-            -d '{"name":"E2E product","description":"created by CI","price":9.99,"stock":3,"imageUrl":"https://example.com/e2e.jpg"}' \
-            | jq -r .id)
-          [ "$id" != "null" ] && [ -n "$id" ] || { echo "Create did not return an id"; exit 1; }
-
-          # Read
-          name=$(curl -fsS "$base/$id" | jq -r .name)
-          [ "$name" = "E2E product" ] || { echo "Read returned '$name'"; exit 1; }
-
-          # Update
-          curl -fsS -X PUT "$base/$id" \
-            -H 'Content-Type: application/json' \
-            -d '{"name":"E2E product updated","description":"updated by CI","price":19.99,"stock":5,"imageUrl":"https://example.com/e2e.jpg"}' > /dev/null
-          name=$(curl -fsS "$base/$id" | jq -r .name)
-          [ "$name" = "E2E product updated" ] || { echo "Update not applied, got '$name'"; exit 1; }
-
-          # Delete, then expect 404
-          curl -fsS -X DELETE "$base/$id" > /dev/null
-          status=$(curl -s -o /dev/null -w '%{http_code}' "$base/$id")
-          [ "$status" = "404" ] || { echo "Expected 404 after delete, got $status"; exit 1; }
-
-          echo "Products CRUD smoke test passed"
+      # API tests only send HTTP requests, so no browser is installed.
+      - name: Run Playwright API tests
+        working-directory: tests/e2e
+        env:
+          API_URL: ${{ env.API_URL }}
+        run: npx playwright test
 
       - name: Frontend tests (Rick and Morty API)
         run: node --test apps/frontend/tests/rick-morty.test.cjs
@@ -142,4 +116,13 @@ jobs:
         with:
           name: backend-log
           path: ${{ runner.temp }}/backend.log
+          if-no-files-found: ignore
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: tests/e2e/playwright-report/
+          retention-days: 30
           if-no-files-found: ignore
