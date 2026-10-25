@@ -1,0 +1,2 @@
+-- Baseline migration. The catalog tables will be added in the following versions (V2, V3, ...).
+-- Never edit an applied migration: add a new file instead.
