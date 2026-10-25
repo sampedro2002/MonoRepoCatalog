@@ -1,6 +1,6 @@
-# Web catalog
+# webCatalog
 
-Product catalog monorepo: a Spring Boot 3 backend on Java 21 with PostgreSQL, and a frontend in plain HTML, CSS and JavaScript served by Vite.
+Product catalog monorepo: a Spring Boot 3 (Java 21) REST API backed by PostgreSQL, and a plain HTML/CSS/JavaScript frontend with no build step. The frontend also includes a Rick and Morty browser that calls its public API directly.
 
 ## Structure
 
@@ -11,58 +11,73 @@ webCatalog/
 ├── gradlew, gradlew.bat
 ├── apps/
 │   ├── backend/               Spring Boot API (Java 21, PostgreSQL, Flyway)
-│   └── frontend/              Plain HTML/CSS/JS served by Vite (dev proxy to the backend)
+│   │   └── src/main/java/org/example/...
+│   └── frontend/              Static pages (no build step): products and Rick and Morty
 ├── packages/
-│   └── shared/                Shared Java library: typed API client and OpenAPI contract
+│   └── shared/                Typed Java client and OpenAPI contract for the API
 ├── tests/
 │   └── integration/           Tests that need a real PostgreSQL (Testcontainers)
-├── .github/workflows/ci.yml   Continuous integration (backend and frontend)
-├── docker-compose.yml         PostgreSQL for local development
+├── .github/workflows/         ci.yml (build and tests) and suitest.yml (API smoke test)
+├── docker-compose.yml         PostgreSQL 16 for local development
+├── suitest.config.json        Database and base URL used by the Suitest workflow
 └── .env.example
 ```
 
 ## Requirements
 
-- JDK 21 (Gradle provisions the toolchain if it is missing)
+- JDK 21 (Gradle downloads the toolchain only if it is missing; the wrapper needs nothing installed)
 - Docker (PostgreSQL via `docker compose`, and the integration tests)
-- Node.js 22 or later (frontend only)
+- Node.js 22+ (only to run the frontend tests and the static server)
 
-## Setup
+## Configuration
 
 ```bash
-cp .env.example .env          # set POSTGRES_PASSWORD and DB_PASSWORD
-docker compose up -d          # start PostgreSQL on localhost:5432
+cp .env.example .env   # then set POSTGRES_PASSWORD and DB_PASSWORD
+docker compose up -d
 ```
 
-The backend reads its database connection from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`. Export these variables in your shell or in your IDE run configuration. Spring does not read `.env` by itself.
-
-The schema is managed by Flyway: scripts in `apps/backend/src/main/resources/db/migration` run on startup, and Hibernate only validates the entities against them. Add new changes as a new `V<n>__description.sql` file; never edit one that has already been applied.
+The backend reads its datasource from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`. Export them in your shell or in your IDE run configuration before starting the backend. Spring does not read `.env` by itself.
 
 ## Backend
 
 ```bash
-./gradlew :apps:backend:bootRun     # http://localhost:8080
-./gradlew :apps:backend:test        # unit tests
-./gradlew :apps:backend:bootJar     # apps/backend/build/libs/backend-1.0.0.jar
+./gradlew :apps:backend:bootRun        # API at http://localhost:8080
+./gradlew :apps:backend:bootJar        # apps/backend/build/libs/backend-1.0.0.jar
 ```
 
-Health endpoints: `GET /api/health` (part of the typed client contract) and `GET /actuator/health`.
+### Schema and seed data
 
-Component scanning covers both `org.example` (platform code) and `org.ejemplo` (catalog domain). JPA entity and repository scanning is configured in `PersistenceConfiguration`.
+The schema is managed by Flyway, and Hibernate only validates the entities against it:
 
-## Errors
+- `V1__catalog_schema.sql` creates the `products` table. Applied once.
+- `R__seed_products.sql` inserts the 15 demo products when their names are missing. It is a repeatable migration, so it runs on startup, never duplicates a product, and keeps edits to existing products.
 
-Every error response is an RFC 7807 problem (`application/problem+json`) with a `traceId` property. The same id is in the `X-Trace-Id` response header and in the server log. If the caller sends a valid `X-Trace-Id` header (letters, digits and dashes, up to 64 characters), that value is reused; otherwise a new one is generated.
+Add schema changes as a new `V<n>__description.sql` file. Never edit a migration that has already been applied to a database you want to keep.
 
-```json
-{"type":"about:blank","title":"Not Found","status":404,"detail":"No static resource api/unknown.","instance":"/api/unknown","traceId":"3f2b8c1e-9a7d-4e21-b0c4-6d5e8f1a2b3c"}
+Because the project has not been released yet, the initial schema may be rebuilt. If you hit `checksum mismatch` after an update, reset your local database instead of editing migrations:
+
+```bash
+docker compose down -v        # deletes the local PostgreSQL volume and its data
+docker compose up -d
 ```
 
-Unexpected errors return a generic 500 message; the details stay in the log under the same `traceId`.
+### Endpoints
+
+| Operation     | Method | Route                  |
+|---------------|--------|------------------------|
+| List / search | GET    | `/api/products?q=text` |
+| Get one       | GET    | `/api/products/{id}`   |
+| Create        | POST   | `/api/products`        |
+| Update        | PUT    | `/api/products/{id}`   |
+| Delete        | DELETE | `/api/products/{id}`   |
+
+Health endpoints: `GET /api/health` and `GET /actuator/health`.
+
+Errors are RFC 7807 problems (`application/problem+json`) with a `traceId` property. The same id is in the `X-Trace-Id` response header and in the server log. A valid incoming `X-Trace-Id` header (letters, digits and dashes, up to 64 characters) is reused; otherwise a new id is generated. Unexpected errors return a generic 500 message; the details stay in the log under the same `traceId`.
 
 ## Typed API client
 
-`packages/shared` contains a typed Java client generated from `packages/shared/src/main/openapi/catalog-api.yaml` by the `openapi-generator` Gradle plugin. The generated sources go to `packages/shared/build/generated/openapi/catalog-client` and are rebuilt on every compile. To change the API, edit the spec and rebuild:
+`packages/shared` contains a typed Java client generated from `packages/shared/src/main/openapi/catalog-api.yaml` by the `openapi-generator` Gradle plugin. The generated sources go to `packages/shared/build/generated/openapi/catalog-client` and are regenerated on every compile. To change the API, edit the spec and compile:
 
 ```bash
 ./gradlew :packages:shared:compileJava   # regenerates the client
@@ -73,10 +88,10 @@ Usage (package `org.example.shared.catalog`):
 ```java
 ApiClient client = new ApiClient();
 client.updateBaseUri("http://localhost:8080");
-HealthStatus status = new HealthApi(client).getHealth();
+List<Product> products = new ProductsApi(client).listProducts(null);
 ```
 
-## Publishing the shared package
+### Publishing the shared package
 
 `packages/shared` is published as `org.example:catalog-shared`. The jar contains the typed client and the OpenAPI contract under `openapi/catalog-api.yaml`.
 
@@ -86,20 +101,10 @@ HealthStatus status = new HealthApi(client).getHealth();
 
 No remote repository is configured yet.
 
-## Demo data
-
-With the `dev` profile, the backend inserts 3 demo categories and 6 demo products (`DemoDataSeeder`) into an empty database. It does nothing if categories already exist.
-
-```bash
-SPRING_PROFILES_ACTIVE=dev ./gradlew :apps:backend:bootRun
-```
-
-To enable it permanently, export `SPRING_PROFILES_ACTIVE=dev` in your shell or add it to your IDE run configuration.
-
 ## Integration tests
 
 ```bash
-./gradlew :tests:integration:test   # starts PostgreSQL containers; needs Docker running
+./gradlew :tests:integration:test      # starts PostgreSQL containers, needs Docker running
 ```
 
 The integration tests use Testcontainers 1.21.4. Older Testcontainers versions fail against Docker Engine 29 with a 400 error from the Docker API.
@@ -108,19 +113,16 @@ The integration tests use Testcontainers 1.21.4. Older Testcontainers versions f
 
 ```bash
 cd apps/frontend
-npm ci                              # install from package-lock.json
-npm run dev                         # http://localhost:5500
-npm run build                       # production build into apps/frontend/dist
+npm start        # http://localhost:5500 (python3 -m http.server)
+npm test         # node --test for the Rick and Morty logic
 ```
 
-Vite proxies `/api` and `/actuator` to the backend on `http://localhost:8080`, so start the backend first to see its health status on the page.
+The product page calls `http://localhost:8080/api/products` directly, so start the backend first. CORS is enabled for `/api/**`. If your API runs elsewhere, change `API_URL` in `apps/frontend/js/app.js`.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on pull requests and on pushes to `main`:
-
-- **backend:** `./gradlew build` (compiles and runs all tests, including the integration tests, which need Docker on the runner).
-- **frontend:** `npm ci` and `npm run build` in `apps/frontend` on Node 22.
+- `.github/workflows/ci.yml` runs on pull requests and on pushes to `main`: `./gradlew build` for the backend, and `npm test` for the frontend.
+- `.github/workflows/suitest.yml` runs on pushes to `test`: it builds the backend jar, starts it against PostgreSQL 16, runs a products CRUD smoke test, and runs the frontend tests. Its database settings are in `suitest.config.json`.
 
 ## Dependencies
 
@@ -131,4 +133,4 @@ Versions are declared in `gradle/libs.versions.toml`; the Spring Boot BOM manage
 | `apps/backend` | spring-boot-starter-web, spring-boot-starter-data-jpa, spring-boot-starter-validation, spring-boot-starter-actuator, flyway-core, flyway-database-postgresql, postgresql (runtime), spring-boot-devtools (development only), spring-boot-starter-test (test) |
 | `packages/shared` | jackson-databind, jackson-datatype-jsr310, jakarta.annotation-api (generated client), junit-jupiter (test) |
 | `tests/integration` | spring-boot-starter-web, spring-boot-starter-data-jpa, spring-boot-starter-test, spring-boot-testcontainers, testcontainers (core, postgresql, junit-jupiter), postgresql (runtime) |
-| `apps/frontend` | vite (development and build only) |
+| `apps/frontend` | none (plain HTML/CSS/JS) |
