@@ -27,3 +27,15 @@ Thumbs.db
 
 # Frontend build output
 apps/frontend/dist/
+
+# AI tooling - never commit
+.agents/
+.gemini/
+.claude/
+.cursor/
+.copilot/
+.aider*
+
+# Tests - source code not committed
+**/src/test/
+tests/integration/src/
