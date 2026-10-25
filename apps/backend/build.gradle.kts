@@ -19,6 +19,8 @@ dependencies {
     implementation(libs.spring.boot.starter.data.jpa)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.actuator)
+    implementation(libs.micrometer.prometheus)
+    implementation(libs.logstash.logback.encoder)
     implementation(libs.flyway.core)
     implementation(libs.flyway.database.postgresql)
     developmentOnly(libs.spring.boot.devtools)
