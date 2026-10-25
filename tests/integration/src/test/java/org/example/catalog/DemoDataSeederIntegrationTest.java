@@ -2,6 +2,8 @@ package org.example.catalog;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.ejemplo.categoria.RepositorioCategoria;
+import org.ejemplo.producto.RepositorioProducto;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
@@ -23,10 +25,10 @@ class DemoDataSeederIntegrationTest {
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
     @Autowired
-    private CategoryRepository categories;
+    private RepositorioCategoria categories;
 
     @Autowired
-    private ProductRepository products;
+    private RepositorioProducto products;
 
     @Autowired
     private DemoDataSeeder seeder;

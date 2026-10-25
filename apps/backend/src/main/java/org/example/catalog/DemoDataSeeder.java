@@ -2,6 +2,10 @@ package org.example.catalog;
 
 import java.math.BigDecimal;
 import java.util.List;
+import org.ejemplo.categoria.Categoria;
+import org.ejemplo.categoria.RepositorioCategoria;
+import org.ejemplo.producto.Producto;
+import org.ejemplo.producto.RepositorioProducto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
@@ -20,10 +24,10 @@ public class DemoDataSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DemoDataSeeder.class);
 
-    private final CategoryRepository categories;
-    private final ProductRepository products;
+    private final RepositorioCategoria categories;
+    private final RepositorioProducto products;
 
-    public DemoDataSeeder(CategoryRepository categories, ProductRepository products) {
+    public DemoDataSeeder(RepositorioCategoria categories, RepositorioProducto products) {
         this.categories = categories;
         this.products = products;
     }
@@ -36,23 +40,23 @@ public class DemoDataSeeder implements ApplicationRunner {
             return;
         }
 
-        Category laptops = categories.save(new Category("Laptops", "Portable computers"));
-        Category audio = categories.save(new Category("Audio", "Headphones and speakers"));
-        Category accessories = categories.save(new Category("Accessories", "Peripherals and cables"));
+        Categoria laptops = categories.save(new Categoria("Laptops", "Portable computers"));
+        Categoria audio = categories.save(new Categoria("Audio", "Headphones and speakers"));
+        Categoria accessories = categories.save(new Categoria("Accessories", "Peripherals and cables"));
 
         products.saveAll(List.of(
-                new Product("Aero 14 Ultrabook", "LAP-AERO-14", "14-inch, 16 GB RAM, 512 GB SSD",
-                        new BigDecimal("1199.00"), laptops),
-                new Product("Titan 16 Workstation", "LAP-TITAN-16", "16-inch, 32 GB RAM, RTX graphics",
-                        new BigDecimal("2499.00"), laptops),
-                new Product("Studio ANC Headphones", "AUD-STUDIO-ANC", "Over-ear, active noise cancelling",
-                        new BigDecimal("249.90"), audio),
-                new Product("Pocket Speaker", "AUD-POCKET-01", "Waterproof Bluetooth speaker",
-                        new BigDecimal("59.50"), audio),
-                new Product("USB-C Dock 8-in-1", "ACC-DOCK-8", "HDMI, Ethernet, card reader, USB-A",
-                        new BigDecimal("89.00"), accessories),
-                new Product("Braided USB-C Cable 2m", "ACC-CABLE-2M", "Nylon braided, 100 W charging",
-                        new BigDecimal("14.99"), accessories)));
+                new Producto("Aero 14 Ultrabook", "14-inch, 16 GB RAM, 512 GB SSD",
+                        new BigDecimal("1199.00"), 12, null, laptops),
+                new Producto("Titan 16 Workstation", "16-inch, 32 GB RAM, RTX graphics",
+                        new BigDecimal("2499.00"), 4, null, laptops),
+                new Producto("Studio ANC Headphones", "Over-ear, active noise cancelling",
+                        new BigDecimal("249.90"), 25, null, audio),
+                new Producto("Pocket Speaker", "Waterproof Bluetooth speaker",
+                        new BigDecimal("59.50"), 40, null, audio),
+                new Producto("USB-C Dock 8-in-1", "HDMI, Ethernet, card reader, USB-A",
+                        new BigDecimal("89.00"), 18, null, accessories),
+                new Producto("Braided USB-C Cable 2m", "Nylon braided, 100 W charging",
+                        new BigDecimal("14.99"), 120, null, accessories)));
 
         log.info("Seeded {} demo categories and {} demo products", categories.count(), products.count());
     }

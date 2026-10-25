@@ -26,7 +26,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest
+@SpringBootTest(classes = org.example.CatalogApplication.class)
 @AutoConfigureMockMvc
 @Testcontainers
 class ProductSearchIntegrationTest {
