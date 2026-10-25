@@ -49,7 +49,7 @@ class CategoriaIntegrationTest {
     }
 
     @Test
-    void crearThenFetchThenListDevuelveCategoria() throws Exception {
+    void crearLuegoConsultarLuegoListarDevuelveCategoria() throws Exception {
         mockMvc.perform(post("/api/categorias")
                         .contentType("application/json")
                         .content("{\"nombre\":\"Bebidas\",\"descripcion\":\"Sin alcohol\"}"))
@@ -82,7 +82,7 @@ class CategoriaIntegrationTest {
     }
 
     @Test
-    void eliminarEliminaCategoria() throws Exception {
+    void eliminarQuitaCategoria() throws Exception {
         Long id = repositorioCategoria.save(new Categoria("Bebidas", null)).getId();
 
         mockMvc.perform(delete("/api/categorias/{id}", id))

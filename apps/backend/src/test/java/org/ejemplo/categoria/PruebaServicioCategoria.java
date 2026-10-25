@@ -81,7 +81,7 @@ class ServicioCategoriaTest {
     }
 
     @Test
-    void actualizarRenombresCuandoNuevoNombreEstaDisponible() {
+    void actualizarRenombraCuandoNuevoNombreEstaDisponible() {
         Categoria categoria = new Categoria("Bebidas", null);
         when(repositorioCategoria.findById(1L)).thenReturn(Optional.of(categoria));
         when(repositorioCategoria.existePorNombre("Jugos")).thenReturn(false);
