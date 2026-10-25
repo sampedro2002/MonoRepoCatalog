@@ -37,6 +37,8 @@ openApiGenerate {
     generateApiTests.set(false)
     generateModelTests.set(false)
     generateApiDocumentation.set(false)
+    // Remove files left over from earlier specs, so renamed tags do not leave stale classes behind
+    cleanupOutput.set(true)
 }
 
 sourceSets {

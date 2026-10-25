@@ -1,2 +1,0 @@
--- Migracion base. Las tablas del catalogo se agregaran en las versiones siguientes (V2, V3, ...).
--- Nunca edites una migracion aplicada: agrega un archivo nuevo.
