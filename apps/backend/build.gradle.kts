@@ -34,3 +34,9 @@ tasks.withType<Test> {
 springBoot {
     mainClass.set("org.example.CatalogApplication")
 }
+
+// Stable artifact name: the Dockerfile and the QA workflow run app.jar by name,
+// instead of depending on the project version. The plain jar keeps its name.
+tasks.named<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+    archiveFileName.set("app.jar")
+}
