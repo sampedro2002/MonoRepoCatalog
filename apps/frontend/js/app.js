@@ -1,4 +1,5 @@
-const API_URL = "http://localhost:8080/api/products";
+const API_BASE = window.API_BASE_URL ?? "";
+const API_URL = `${API_BASE}/api/products`;
 
 const grid = document.getElementById("grid");
 const message = document.getElementById("message");
