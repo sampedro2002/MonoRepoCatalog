@@ -46,7 +46,7 @@ The backend reads its datasource from `DB_URL`, `DB_USERNAME` and `DB_PASSWORD`.
 
 ```bash
 ./gradlew :apps:backend:bootRun        # API at http://localhost:8080
-./gradlew :apps:backend:bootJar        # apps/backend/build/libs/backend-1.0.0.jar
+./gradlew :apps:backend:bootJar        # apps/backend/build/libs/app.jar
 ```
 
 ### Schema and seed data
