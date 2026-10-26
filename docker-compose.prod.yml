@@ -1,0 +1,59 @@
+# Production stack on the EC2 host (/opt/catalog/docker-compose.yml).
+# Images are pulled from Docker Hub, never built here. Values come from /opt/catalog/.env,
+# written by infra/terraform/user_data.sh.tftpl. Only nginx is published, on port 80.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-catalog}
+      POSTGRES_USER: ${POSTGRES_USER:-catalog}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-catalog} -d ${POSTGRES_DB:-catalog}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *logging
+
+  backend:
+    image: ${DOCKERHUB_USERNAME:?set DOCKERHUB_USERNAME in .env}/catalog-backend:${IMAGE_TAG:-prod}
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-catalog}
+      DB_USERNAME: ${POSTGRES_USER:-catalog}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      # Schema only, unless the host was created with load_demo_data = true
+      SPRING_FLYWAY_LOCATIONS: ${SPRING_FLYWAY_LOCATIONS:-classpath:db/migration}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    logging: *logging
+
+  frontend:
+    image: ${DOCKERHUB_USERNAME}/catalog-frontend:${IMAGE_TAG:-prod}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    logging: *logging
+
+volumes:
+  pgdata:

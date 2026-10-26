@@ -1,0 +1,44 @@
+#!/bin/bash
+# First boot of the catalog host: install Docker, write the stack, start it.
+# Output goes to /var/log/cloud-init-output.log
+set -euxo pipefail
+
+# 2 GB swap, so a memory peak on a t3.small slows the JVM down instead of killing it
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
+# Docker starts on every boot, and restart: unless-stopped brings the containers back
+dnf install -y docker
+systemctl enable --now docker
+usermod -aG docker ec2-user
+
+# Amazon Linux 2023 has no Compose package, so install the CLI plugin
+mkdir -p /usr/local/lib/docker/cli-plugins
+curl -fsSL https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 \
+  -o /usr/local/lib/docker/cli-plugins/docker-compose
+chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+mkdir -p /opt/catalog
+cd /opt/catalog
+
+# Quoted heredocs: the values were already filled in by Terraform, the shell must not expand them
+cat > docker-compose.yml <<'COMPOSE'
+${compose_file}
+COMPOSE
+
+cat > .env <<'ENV'
+DOCKERHUB_USERNAME=${dockerhub_username}
+IMAGE_TAG=${image_tag}
+POSTGRES_DB=catalog
+POSTGRES_USER=catalog
+POSTGRES_PASSWORD=${db_password}
+SPRING_FLYWAY_LOCATIONS=${flyway_locations}
+ENV
+chmod 600 .env
+chown -R ec2-user:ec2-user /opt/catalog
+
+docker compose pull
+docker compose up -d

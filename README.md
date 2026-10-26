@@ -18,8 +18,11 @@ webCatalog/
 ├── tests/
 │   ├── integration/           Tests that need a real PostgreSQL (Testcontainers)
 │   └── e2e/                   Playwright API tests against a running backend
-├── .github/workflows/         ci.yml (build and tests) and suitest.yml (API smoke test)
-├── docker-compose.yml         PostgreSQL 16 for local development
+├── .github/workflows/         CI, E2E, image publishing and the EC2 deploy
+├── infra/terraform/           AWS host: EC2 + Elastic IP (Learner Lab ready)
+├── docker-compose.yml         Full local stack, built from source
+├── docker-compose.prod.yml    Production stack on EC2, pulled from Docker Hub
+├── docs/runbook.md            Operations: logs, rollback, outages
 ├── suitest.config.json        Database and base URL used by the Suitest workflow
 └── .env.example
 ```
@@ -140,6 +143,42 @@ The product page calls `http://localhost:8080/api/products` directly, so start t
 
 - `.github/workflows/ci.yml` runs on pull requests and on pushes to `main`: `./gradlew build` for the backend, and `npm test` for the frontend.
 - `.github/workflows/suitest.yml` runs on pushes to `test`: it builds the backend jar, starts it against PostgreSQL 16, runs the Playwright API tests in `tests/e2e`, and runs the frontend tests. Its database settings are in `suitest.config.json`.
+
+## Deployment (AWS EC2)
+
+Production is a single EC2 instance with a fixed Elastic IP. It runs `docker-compose.prod.yml`: nginx (frontend) on port 80 proxies `/api` to the backend, and Postgres stays inside the Docker network. Open `http://<public_ip>` from any phone or computer.
+
+Release flow:
+
+1. Push to `test`: `suitest.yml` runs the E2E tests, then `qa-images.yml` publishes `catalog-backend` and `catalog-frontend` as `:qa` and `:sha-<commit>` on Docker Hub.
+2. Merge `test` into `main` with a merge commit: `prod-promote.yml` retags the tested images as `:prod` and `:release-<sha>`, without rebuilding.
+3. `deploy-ec2.yml` copies `docker-compose.prod.yml` to the host over SSH, pulls `:prod` and restarts the services that changed, then checks `/api/health`.
+
+`manual-rollback.yml` retags an older `release-<sha>` as `:prod` and runs the same deploy.
+
+### Creating the host
+
+Requires Terraform 1.6+ and the AWS CLI. In an AWS Academy Learner Lab, copy the credentials from **AWS Details > AWS CLI** into `~/.aws/credentials` (they expire with the session) and download `labsuser.pem` (key pair `vockey`).
+
+```bash
+cd infra/terraform
+terraform init
+terraform apply -var dockerhub_username=<user>        # add -var image_tag=qa if :prod does not exist yet
+terraform output app_url                              # http://<public_ip>, ready about 3 minutes later
+```
+
+Optional variables: `load_demo_data=true` seeds the 15 demo products, `instance_type` (default `t3.small`), `ssh_allowed_cidr`. The Docker Hub repositories must be public. The state is local (`terraform.tfstate`, gitignored), so keep it on the machine that created the host.
+
+GitHub configuration, in the `production` environment:
+
+| Name | Kind | Value |
+|------|------|-------|
+| `DOCKERHUB_USERNAME` | variable | Docker Hub user |
+| `DOCKERHUB_TOKEN` | secret | Docker Hub access token |
+| `EC2_HOST` | variable | `terraform output -raw public_ip` |
+| `EC2_SSH_KEY` | secret | full contents of `labsuser.pem` |
+
+When the lab session ends, AWS stops the instance. Starting the lab again brings it back with the same IP and data. `terraform destroy` deletes everything, including the database.
 
 ## Dependencies
 

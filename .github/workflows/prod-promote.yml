@@ -94,34 +94,9 @@ jobs:
           echo "- Backend Promoted: \`${{ steps.changes.outputs.backend_changed }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- Frontend Promoted: \`${{ steps.changes.outputs.frontend_changed }}\`" >> $GITHUB_STEP_SUMMARY
 
+  # Only when an image was promoted; the host then pulls :prod and restarts what changed
   deploy:
     needs: promote
-    runs-on: ubuntu-latest
-    environment: production
-    timeout-minutes: 10
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Deploy Backend to ECS
-        if: needs.promote.outputs.backend_changed == 'true'
-        run: |
-          aws ecs update-service --cluster catalog --service backend --force-new-deployment
-          aws ecs wait services-stable --cluster catalog --services backend
-
-      - name: Deploy Frontend to ECS
-        if: needs.promote.outputs.frontend_changed == 'true'
-        run: |
-          aws ecs update-service --cluster catalog --service frontend --force-new-deployment
-          aws ecs wait services-stable --cluster catalog --services frontend
-
-      - name: Smoke Test
-        run: |
-          curl -fsS http://${{ vars.ALB_DNS }}/api/health | grep -q '"status":"UP"'
+    if: needs.promote.outputs.backend_changed == 'true' || needs.promote.outputs.frontend_changed == 'true'
+    uses: ./.github/workflows/deploy-ec2.yml
+    secrets: inherit
