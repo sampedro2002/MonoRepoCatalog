@@ -2,9 +2,9 @@ package org.example;
 
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
@@ -28,9 +28,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     static final String TRACE_ID_HEADER = "X-Trace-Id";
     static final String TRACE_ID_PROPERTY = "traceId";
 
-    // Accepts only short, plain ids from the caller, so arbitrary input never reaches the logs
-    private static final Pattern VALID_TRACE_ID = Pattern.compile("[A-Za-z0-9-]{1,64}");
-
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @Override
@@ -40,7 +37,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             HttpHeaders headers,
             HttpStatusCode statusCode,
             WebRequest request) {
-        String traceId = resolveTraceId(request.getHeader(TRACE_ID_HEADER));
+        String traceId = getTraceId();
         // Headers passed by Spring can be read-only, so copy them before adding the trace id
         HttpHeaders writableHeaders = new HttpHeaders();
         writableHeaders.putAll(headers);
@@ -51,14 +48,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         if (response.getBody() instanceof ProblemDetail problem) {
             problem.setProperty(TRACE_ID_PROPERTY, traceId);
         }
-        log.warn("traceId={} status={} error={}", traceId, statusCode.value(), ex.getMessage());
+        log.warn("status={} error={}", statusCode.value(), ex.getMessage());
         return response;
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDetail> handleUnexpected(Exception ex, HttpServletRequest request) {
-        String traceId = resolveTraceId(request.getHeader(TRACE_ID_HEADER));
-        log.error("traceId={} unexpected error", traceId, ex);
+        String traceId = getTraceId();
+        log.error("unexpected error", ex);
 
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
                 HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred.");
@@ -71,10 +68,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(problem);
     }
 
-    private static String resolveTraceId(@Nullable String incoming) {
-        if (incoming != null && VALID_TRACE_ID.matcher(incoming).matches()) {
-            return incoming;
-        }
-        return UUID.randomUUID().toString();
+    private static String getTraceId() {
+        String traceId = MDC.get("traceId");
+        return (traceId != null && !traceId.isBlank()) ? traceId : UUID.randomUUID().toString();
     }
 }

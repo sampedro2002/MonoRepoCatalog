@@ -1,0 +1,9 @@
+# Shell scripts run inside Linux containers, so they must keep LF on every checkout
+gradlew text eol=lf
+*.sh text eol=lf
+# Embedded by Terraform into the EC2 boot script, which bash runs on Linux
+*.tftpl text eol=lf
+docker-compose.prod.yml text eol=lf
+
+# Windows launchers keep CRLF
+*.bat text eol=crlf

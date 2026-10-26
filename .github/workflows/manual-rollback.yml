@@ -1,0 +1,41 @@
+name: Manual Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Release tag to restore (e.g. release-abc1234)'
+        required: true
+      service:
+        description: 'backend or frontend'
+        required: true
+        type: choice
+        options: [backend, frontend]
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Retag to prod
+        run: |
+          IMAGE="${{ vars.DOCKERHUB_USERNAME }}/catalog-${{ github.event.inputs.service }}"
+          docker buildx imagetools create -t $IMAGE:prod $IMAGE:${{ github.event.inputs.release }}
+
+  # The host pulls the retagged :prod image and restarts only that service
+  deploy:
+    needs: rollback
+    uses: ./.github/workflows/deploy-ec2.yml
+    secrets: inherit

@@ -36,13 +36,25 @@ apps/frontend/dist/
 .copilot/
 .aider*
 
-# Tests - source code not committed
-**/src/test/
-tests/integration/src/
-
 # Playwright
 playwright-report/
 test-results/
 
+# Task/AI planning notes (kept local, not part of the deliverable)
+docs/tasks/
+!docs/runbook.md
+
 # Local credentials (Spring profile "local")
 application-local.properties
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+.terraform.tfstate.lock.info
+
+# EC2 key pairs (Learner Lab labsuser.pem)
+*.pem
+*.ppk

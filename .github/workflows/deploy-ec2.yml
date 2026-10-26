@@ -1,0 +1,52 @@
+name: Deploy to EC2
+
+# Rolls the stack on the EC2 host forward to the images tagged :prod in Docker Hub.
+# Called by "PROD Promote" and "Manual Rollback"; can also be run by hand from the Actions tab.
+# Needs, in the production environment: vars.EC2_HOST (terraform output public_ip)
+# and secrets.EC2_SSH_KEY (contents of the lab's labsuser.pem).
+on:
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      EC2_HOST: ${{ vars.EC2_HOST }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        env:
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/id_ec2
+          chmod 600 ~/.ssh/id_ec2
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
+
+      # The host keeps its own .env (passwords); only the compose file comes from the repo
+      - name: Upload compose file
+        run: scp -i ~/.ssh/id_ec2 docker-compose.prod.yml "ec2-user@$EC2_HOST:/opt/catalog/docker-compose.yml"
+
+      # up -d only recreates the services whose image changed; --wait blocks until they are healthy
+      - name: Pull images and restart changed services
+        run: |
+          ssh -i ~/.ssh/id_ec2 "ec2-user@$EC2_HOST" '
+            set -e
+            cd /opt/catalog
+            sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=prod/" .env
+            docker compose pull
+            docker compose up -d --wait --wait-timeout 300 --remove-orphans
+            docker image prune -f
+          '
+
+      - name: Smoke test
+        run: |
+          curl -fsS --retry 10 --retry-delay 6 --retry-all-errors "http://$EC2_HOST/api/health" | grep -q '"status":"UP"'
