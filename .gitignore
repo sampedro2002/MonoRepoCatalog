@@ -54,3 +54,7 @@ application-local.properties
 crash.log
 crash.*.log
 .terraform.tfstate.lock.info
+
+# EC2 key pairs (Learner Lab labsuser.pem)
+*.pem
+*.ppk
